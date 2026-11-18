@@ -1,9 +1,28 @@
-import './globals.css';
-import RegisterSW from './RegisterSW';
-import type { ReactNode } from 'react';
+import "./globals.css";
+import RegisterSW from "./RegisterSW";
+import type { ReactNode } from "react";
 
-export const metadata = { title: '우리 가족 달력', icons: { icon: [{ url: '/icon-192.png', sizes: '192x192' }, { url: '/icon-512.png', sizes: '512x512' }], apple: '/apple-touch-icon.png' }, appleWebApp: { capable: true, title: '가족 달력', statusBarStyle: 'default' as const } };
-export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' as const, themeColor: '#2F3A4F' };
+export const metadata = {
+  title: "수수 부부 달력♥️",
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192" },
+      { url: "/icon-512.png", sizes: "512x512" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "가족 달력",
+    statusBarStyle: "default" as const,
+  },
+};
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+  themeColor: "#2F3A4F",
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
