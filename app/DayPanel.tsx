@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   COLOR,
   Ev,
@@ -24,6 +24,7 @@ export default function DayPanel({
   events,
   expenses,
   weekTotal,
+  focus = null,
   onClose,
   onChanged,
   onSpendChanged,
@@ -32,10 +33,22 @@ export default function DayPanel({
   events: Ev[];
   expenses: Expense[];
   weekTotal: number;
+  focus?: "expense" | "event" | null;
   onClose: () => void;
   onChanged: () => void;
   onSpendChanged: () => void;
 }) {
+  const xRef = useRef<HTMLInputElement>(null);
+  const tRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!focus) return;
+    const t = setTimeout(() => {
+      const el = focus === "expense" ? xRef.current : tRef.current;
+      el?.scrollIntoView({ block: "center" });
+      el?.focus();
+    }, 300);
+    return () => clearTimeout(t);
+  }, [focus]);
   const [f, setF] = useState(blank);
   const [editing, setEditing] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -194,6 +207,7 @@ export default function DayPanel({
           <label>
             제목
             <input
+              ref={tRef}
               value={f.title}
               onChange={(e) => set("title", e.target.value)}
               required
@@ -283,6 +297,7 @@ export default function DayPanel({
           ))}
           <form className="xadd" onSubmit={addExpense}>
             <input
+              ref={xRef}
               value={en}
               onChange={(e) => setEn(e.target.value)}
               placeholder="이름"

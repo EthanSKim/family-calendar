@@ -33,3 +33,6 @@ export function parseMoney(s: string) {
 
 // Shorter form for tight spots (weekly totals): drops cents from $1,000 up.
 export const moneyShort = (c: number) => (c >= 100000 ? '$' + Math.round(c / 100).toLocaleString('en-US') : money(c));
+
+// Tiniest form for phone calendar cells: whole dollars, $1.2k from $1,000 up.
+export const moneyTiny = (c: number) => (c >= 100000 ? '$' + (c / 100000).toFixed(1).replace('.0', '') + 'k' : '$' + Math.round(c / 100));

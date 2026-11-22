@@ -4,6 +4,7 @@ import DayPanel from "./DayPanel";
 import AnnivPanel from "./AnnivPanel";
 import Checklist from "./Checklist";
 import WallMode from "./WallMode";
+import { Agenda, AgendaWeek, DayCard } from "./MobileViews";
 import InstallApp from "./InstallApp";
 import { useList } from "./useList";
 import {
@@ -18,6 +19,7 @@ import {
   fmtTime,
   money,
   moneyShort,
+  moneyTiny,
 } from "./types";
 
 const WMO = (c: number) =>
@@ -164,6 +166,18 @@ export default function Home() {
   const [events, setEvents] = useState<Ev[]>([]);
   const [off, setOff] = useState(0);
   const [sel, setSel] = useState<string | null>(null);
+  const [quickAdd, setQuickAdd] = useState<"expense" | "event" | null>(null);
+  const [mobile, setMobile] = useState(false);
+  const [mtab, setMtab] = useState<"cal" | "list">("cal");
+  const [pick, setPick] = useState<string | null>(null);
+  const swipe0 = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    const q = window.matchMedia("(max-width: 640px)");
+    const f = () => setMobile(q.matches);
+    f();
+    q.addEventListener("change", f);
+    return () => q.removeEventListener("change", f);
+  }, []);
   const [dbErr, setDbErr] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const wx = useWeather(ok === true);
@@ -262,6 +276,32 @@ export default function Home() {
     };
   }, [sync]);
 
+  // Android shortcuts (long-press the app icon): ?add=expense | event | grocery
+  const quickRef = useRef<"expense" | "event" | "grocery" | null>(null);
+  useEffect(() => {
+    const a = new URLSearchParams(window.location.search).get("add");
+    if (a === "expense" || a === "event" || a === "grocery") {
+      quickRef.current = a;
+      window.history.replaceState(null, "", "/"); // so a refresh doesn't reopen it
+    }
+  }, []);
+  useEffect(() => {
+    const a = quickRef.current;
+    if (ok !== true || !todayStr || !a) return;
+    quickRef.current = null;
+    if (a === "grocery") {
+      // jump to the grocery list's "add item" line
+      setTimeout(() => {
+        const el = document.getElementById("grocery-add");
+        el?.scrollIntoView({ block: "center" });
+        el?.focus();
+      }, 400);
+    } else {
+      setQuickAdd(a); // today's panel, cursor on the event title or the expense name
+      setSel(todayStr);
+    }
+  }, [ok, todayStr]);
+
   const changed = () => {
     touch();
     sync();
@@ -324,6 +364,13 @@ export default function Home() {
     .slice(0, 4);
   const todayEvents = events.filter((e) => e.date === todayStr);
 
+  const monthKey = `${y}-${pad(m + 1)}`;
+  const pickDate =
+    pick && pick.startsWith(monthKey)
+      ? pick
+      : off === 0
+        ? todayStr
+        : `${monthKey}-01`;
   const cells = [];
   for (let w = 0; w < weeks; w++) {
     for (let i = 0; i < 7; i++) {
@@ -335,38 +382,40 @@ export default function Home() {
       const ans = inMonth
         ? annivs.items.filter((a) => a.month === m + 1 && a.day === d)
         : [];
+      const chips = [
+        ...evs.map((e) => ({ k: e.id, t: e.title, c: `m-${e.member}` })),
+        ...ans.map((a) => ({ k: a.id, t: a.title, c: "an" })),
+      ];
+      const shown = mobile ? chips.slice(0, 2) : chips; // phones: two titles per day, the day card below has the rest
       cells.push(
         <button
           key={`${w}-${i}`}
-          className={`cell${i === 0 ? " su" : ""}${!inMonth ? " out" : ""}${inMonth && ds === todayStr ? " today" : ""}`}
+          className={`cell${i === 0 ? " su" : ""}${!inMonth ? " out" : ""}${inMonth && ds === todayStr ? " today" : ""}${mobile && inMonth && ds === pickDate ? " pick" : ""}`}
           disabled={!inMonth}
           aria-label={
-            inMonth ? `${m + 1}월 ${d}일, 일정 ${evs.length}건` : undefined
+            inMonth
+              ? `${m + 1}월 ${d}일, 일정 ${evs.length}건${sp ? `, 지출 ${money(sp)}` : ""}`
+              : undefined
           }
-          onClick={() => setSel(ds)}
+          onClick={() => (mobile ? setPick(ds) : setSel(ds))}
         >
           <span className="n">
             {inMonth ? d : d < 1 ? new Date(y, m, d).getDate() : d - days}
           </span>
-          {evs.map((e) => (
-            <span key={e.id} className={`chip m-${e.member}`}>
-              {e.title}
+          {shown.map((c) => (
+            <span key={c.k} className={`chip ${c.c}`}>
+              {c.t}
             </span>
           ))}
-          {ans.map((a) => (
-            <span key={a.id} className="chip an">
-              {a.title}
-            </span>
-          ))}
-          <span className="dots">
-            {evs.map((e) => (
-              <i key={e.id} style={{ background: COLOR[e.member] }} />
-            ))}
-            {ans.map((a) => (
-              <i key={a.id} style={{ background: "#A8884A" }} />
-            ))}
-          </span>
-          {sp ? <span className="spent">{moneyShort(sp)}</span> : null}
+          {mobile && chips.length > 2 && (
+            <span className="more">+{chips.length - 2}</span>
+          )}
+          {sp ? (
+            <>
+              <span className="spent">{moneyShort(sp)}</span>
+              <span className="spent-s">{moneyTiny(sp)}</span>
+            </>
+          ) : null}
         </button>,
       );
     }
@@ -376,6 +425,38 @@ export default function Home() {
       </div>,
     );
   }
+
+  // Phone list view: only days that have something (plus today), grouped by week.
+  const agenda: AgendaWeek[] = [];
+  for (let w = 0; w < weeks; w++) {
+    const rows = [];
+    for (let i = 0; i < 7; i++) {
+      const d = w * 7 + i - first + 1;
+      if (d < 1 || d > days) continue;
+      const ds = `${monthKey}-${pad(d)}`;
+      const evs = events.filter((e) => e.date === ds),
+        ans = annivs.items.filter((a) => a.month === m + 1 && a.day === d),
+        xs = expenses.filter((e) => e.date === ds);
+      if (evs.length || ans.length || xs.length || ds === todayStr)
+        rows.push({
+          date: ds,
+          d,
+          dow: "일월화수목금토"[i],
+          events: evs,
+          annivs: ans,
+          expenses: xs,
+          total: byDay[ds] ?? 0,
+        });
+    }
+    const wa = new Date(y, m, 1 - first + w * 7),
+      wb = new Date(y, m, 1 - first + w * 7 + 6);
+    agenda.push({
+      label: `${wa.getMonth() + 1}/${wa.getDate()} – ${wb.getMonth() + 1}/${wb.getDate()}`,
+      total: weekSum(w),
+      days: rows,
+    });
+  }
+  const pd = Number(pickDate.slice(8));
 
   return (
     <main className="app">
@@ -413,8 +494,45 @@ export default function Home() {
         </div>
       )}
 
+      {mobile && (
+        <div className="seg" role="tablist" aria-label="보기">
+          <button
+            role="tab"
+            aria-selected={mtab === "cal"}
+            onClick={() => setMtab("cal")}
+          >
+            달력
+          </button>
+          <button
+            role="tab"
+            aria-selected={mtab === "list"}
+            onClick={() => setMtab("list")}
+          >
+            목록
+          </button>
+        </div>
+      )}
+
       <div className="main">
-        <section className="card" aria-label="달력">
+        <section
+          className="card calcard"
+          aria-label="달력"
+          onTouchStart={(e) => {
+            swipe0.current = {
+              x: e.touches[0].clientX,
+              y: e.touches[0].clientY,
+            };
+          }}
+          onTouchEnd={(e) => {
+            const s0 = swipe0.current;
+            swipe0.current = null;
+            if (!s0) return;
+            const dx = e.changedTouches[0].clientX - s0.x,
+              dy = e.changedTouches[0].clientY - s0.y;
+            if (Math.abs(dx) > 70 && Math.abs(dy) < 40)
+              setOff(off + (dx < 0 ? 1 : -1)); // swipe to change month
+          }}
+        >
           <div className="cal-hd">
             <div className="mnav">
               <button
@@ -455,15 +573,38 @@ export default function Home() {
               ))}
             </div>
           </div>
-          <div className="cal">
-            {["일", "월", "화", "수", "목", "금", "토", "주간"].map((d) => (
-              <div key={d} className="dow">
-                {d}
-              </div>
-            ))}
-            {cells}
-          </div>
+          {mobile && mtab === "list" ? (
+            <Agenda weeks={agenda} todayStr={todayStr} onOpen={setSel} />
+          ) : (
+            <div className="cal">
+              {["일", "월", "화", "수", "목", "금", "토", "주간"].map((d) => (
+                <div key={d} className="dow">
+                  {d}
+                </div>
+              ))}
+              {cells}
+            </div>
+          )}
         </section>
+
+        {mobile && mtab === "cal" && (
+          <DayCard
+            date={pickDate}
+            events={events.filter((e) => e.date === pickDate)}
+            annivs={annivs.items.filter(
+              (a) => a.month === m + 1 && a.day === pd,
+            )}
+            expenses={expenses.filter((e) => e.date === pickDate)}
+            onAddEvent={() => {
+              setQuickAdd("event");
+              setSel(pickDate);
+            }}
+            onAddExpense={() => {
+              setQuickAdd("expense");
+              setSel(pickDate);
+            }}
+          />
+        )}
 
         <aside className="side">
           <div className="card">
@@ -486,6 +627,7 @@ export default function Home() {
           <div className="card two">
             <Checklist
               title="장보기"
+              inputId="grocery-add"
               hint="+ 항목 추가"
               rows={groceries.items.map((g) => ({
                 id: g.id,
@@ -589,7 +731,11 @@ export default function Home() {
           events={events.filter((e) => e.date === sel)}
           expenses={expenses.filter((e) => e.date === sel)}
           weekTotal={selWeek}
-          onClose={() => setSel(null)}
+          focus={quickAdd}
+          onClose={() => {
+            setSel(null);
+            setQuickAdd(null);
+          }}
           onChanged={changed}
           onSpendChanged={changed}
         />

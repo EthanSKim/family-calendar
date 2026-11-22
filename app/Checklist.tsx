@@ -3,8 +3,8 @@ import { FormEvent, useState } from 'react';
 
 export type Row = { id: string; label: string; done: boolean };
 
-export default function Checklist({ title, rows, hint, onAdd, onToggle, onRemove }: {
-  title: string; rows: Row[]; hint: string;
+export default function Checklist({ title, rows, hint, inputId, onAdd, onToggle, onRemove }: {
+  title: string; rows: Row[]; hint: string; inputId?: string;
   onAdd: (label: string) => Promise<boolean>; onToggle: (id: string, done: boolean) => void; onRemove: (id: string) => void;
 }) {
   const [v, setV] = useState('');
@@ -30,7 +30,7 @@ export default function Checklist({ title, rows, hint, onAdd, onToggle, onRemove
         </div>
       ))}
       <form className="addrow" onSubmit={add}>
-        <input value={v} onChange={(e) => setV(e.target.value)} placeholder={hint} aria-label={`${title} 추가`} maxLength={100} />
+        <input id={inputId} value={v} onChange={(e) => setV(e.target.value)} placeholder={hint} aria-label={`${title} 추가`} maxLength={100} />
       </form>
       {doneRows.length > 0 && <button className="link" onClick={() => doneRows.forEach((r) => onRemove(r.id))}>완료 항목 지우기</button>}
     </div>

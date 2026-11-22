@@ -13,6 +13,36 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "any",
     background_color: "#F4EEE2",
     theme_color: "#2F3A4F",
+    // Android: press and hold the installed app icon to see this shortcut.
+    shortcuts: [
+      {
+        name: "지출 추가",
+        short_name: "지출",
+        description: "오늘 지출을 빠르게 추가해요",
+        url: "/?add=expense",
+        icons: [
+          { src: "/shortcut-expense.png", sizes: "192x192", type: "image/png" },
+        ],
+      },
+      {
+        name: "일정 추가",
+        short_name: "일정",
+        description: "오늘 일정을 빠르게 추가해요",
+        url: "/?add=event",
+        icons: [
+          { src: "/shortcut-event.png", sizes: "192x192", type: "image/png" },
+        ],
+      },
+      {
+        name: "장보기",
+        short_name: "장보기",
+        description: "장보기 목록에 바로 추가해요",
+        url: "/?add=grocery",
+        icons: [
+          { src: "/shortcut-grocery.png", sizes: "192x192", type: "image/png" },
+        ],
+      },
+    ],
     icons: [
       {
         src: "/icon-192.png",

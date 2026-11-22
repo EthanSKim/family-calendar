@@ -108,3 +108,44 @@ body{margin:0;background:var(--ivory);color:var(--ink);font-family:'Noto Sans KR
 .panel{padding-bottom:max(24px,env(safe-area-inset-bottom))}
 @media(min-width:1001px) and (max-width:1180px){.main{grid-template-columns:1fr 320px}.cal{grid-template-columns:repeat(7,1fr) 72px}.clock .time{font-size:68px}.title{display:none}}
 @media(max-width:640px){.wk{font-size:13px}}
+
+/* mobile calendar: month grid with titles + daily $, day card below, list view tab */
+.seg{display:none}
+.spent-s{display:none}
+.btn.o{background:none;border:1px solid var(--gold);color:var(--navy)}
+.daycard .row2{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--soft);font-size:14px}
+.daycard .row2 b{font:600 15px 'Cormorant Garamond','Noto Serif KR',serif;color:var(--burg);min-width:72px}
+.dcbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.agw{margin-bottom:14px}
+.agh{font-size:20px !important}
+.wkt{font-size:12px;color:var(--burg);font-weight:500}
+.agd{display:grid;grid-template-columns:42px 1fr auto;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--soft);padding:10px 2px;font:inherit;color:inherit;cursor:pointer;min-height:48px}
+.agd.today{background:#F3EBDA}
+.agdate{text-align:center}.agdate b{display:block;font:600 22px/1 'Cormorant Garamond',serif;color:var(--navy)}.agd.today .agdate b{color:var(--burg)}
+.agdate small{font-size:11px;color:var(--muted)}
+.agev{display:flex;gap:7px;align-items:baseline;font-size:14px;margin-bottom:3px}
+.agev i{width:8px;height:8px;border-radius:50%;flex:none}
+.agev small{font-size:12px;color:var(--muted)}
+.agx{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.agsum{font:600 17px 'Cormorant Garamond',serif;color:var(--burg);white-space:nowrap;align-self:start}
+@media(max-width:640px){
+  .app{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
+  .seg{display:flex;gap:3px;padding:3px;border:1px solid var(--line);border-radius:24px;background:var(--card)}
+  .seg button{flex:1;height:40px;border:0;border-radius:20px;background:none;font:500 14px 'Noto Sans KR',sans-serif;color:#4A4650;cursor:pointer}
+  .seg button[aria-selected=true]{background:var(--navy);color:var(--card)}
+  .calcard{padding:10px 6px}
+  .cal-hd{padding:0 6px}
+  .cal{grid-template-columns:repeat(7,1fr)}
+  .dow:last-child{display:none}
+  .cell{min-height:86px;padding:3px 2px;align-items:stretch;gap:2px}
+  .cell .n{font-size:14px;align-self:flex-start}
+  .cell.today .n{width:22px;height:22px;margin:0}
+  .cell.pick{box-shadow:inset 0 0 0 2px var(--navy)}
+  .chip{display:block;font-size:10px;line-height:1.3;padding:1px 3px}
+  .more{font-size:9px;color:var(--muted);padding-left:3px}
+  .dots{display:none}
+  .spent{display:none}
+  .spent-s{display:block;margin-top:auto;text-align:right;font-size:10px;font-weight:500;color:var(--burg)}
+  .wk{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center;padding:3px 8px;min-height:0;font-size:13px}
+  .wk::before{content:'주간 합계';font:400 11px 'Noto Sans KR',sans-serif;color:var(--muted)}
+}
