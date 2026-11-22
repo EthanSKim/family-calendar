@@ -4,7 +4,7 @@ import DayPanel from "./DayPanel";
 import AnnivPanel from "./AnnivPanel";
 import Checklist from "./Checklist";
 import WallMode from "./WallMode";
-import { Agenda, AgendaWeek, DayCard } from "./MobileViews";
+import { Agenda, AgendaWeek } from "./MobileViews";
 import InstallApp from "./InstallApp";
 import { useList } from "./useList";
 import {
@@ -169,7 +169,6 @@ export default function Home() {
   const [quickAdd, setQuickAdd] = useState<"expense" | "event" | null>(null);
   const [mobile, setMobile] = useState(false);
   const [mtab, setMtab] = useState<"cal" | "list">("cal");
-  const [pick, setPick] = useState<string | null>(null);
   const swipe0 = useRef<{ x: number; y: number } | null>(null);
   useEffect(() => {
     const q = window.matchMedia("(max-width: 640px)");
@@ -365,12 +364,6 @@ export default function Home() {
   const todayEvents = events.filter((e) => e.date === todayStr);
 
   const monthKey = `${y}-${pad(m + 1)}`;
-  const pickDate =
-    pick && pick.startsWith(monthKey)
-      ? pick
-      : off === 0
-        ? todayStr
-        : `${monthKey}-01`;
   const cells = [];
   for (let w = 0; w < weeks; w++) {
     const strip = (
@@ -396,14 +389,14 @@ export default function Home() {
       cells.push(
         <button
           key={`${w}-${i}`}
-          className={`cell${i === 0 ? " su" : ""}${!inMonth ? " out" : ""}${inMonth && ds === todayStr ? " today" : ""}${mobile && inMonth && ds === pickDate ? " pick" : ""}`}
+          className={`cell${i === 0 ? " su" : ""}${!inMonth ? " out" : ""}${inMonth && ds === todayStr ? " today" : ""}`}
           disabled={!inMonth}
           aria-label={
             inMonth
               ? `${m + 1}월 ${d}일, 일정 ${evs.length}건${sp ? `, 지출 ${money(sp)}` : ""}`
               : undefined
           }
-          onClick={() => (mobile ? setPick(ds) : setSel(ds))}
+          onClick={() => setSel(ds)}
         >
           <span className="n">
             {inMonth ? d : d < 1 ? new Date(y, m, d).getDate() : d - days}
@@ -458,7 +451,6 @@ export default function Home() {
       days: rows,
     });
   }
-  const pd = Number(pickDate.slice(8));
 
   return (
     <main className="app">
@@ -588,25 +580,6 @@ export default function Home() {
             </div>
           )}
         </section>
-
-        {mobile && mtab === "cal" && (
-          <DayCard
-            date={pickDate}
-            events={events.filter((e) => e.date === pickDate)}
-            annivs={annivs.items.filter(
-              (a) => a.month === m + 1 && a.day === pd,
-            )}
-            expenses={expenses.filter((e) => e.date === pickDate)}
-            onAddEvent={() => {
-              setQuickAdd("event");
-              setSel(pickDate);
-            }}
-            onAddExpense={() => {
-              setQuickAdd("expense");
-              setSel(pickDate);
-            }}
-          />
-        )}
 
         <aside className="side">
           <div className="card">
