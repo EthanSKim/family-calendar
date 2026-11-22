@@ -149,3 +149,12 @@ body{margin:0;background:var(--ivory);color:var(--ink);font-family:'Noto Sans KR
   .wk{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center;padding:3px 8px;min-height:0;font-size:13px}
   .wk::before{content:'주간 합계';font:400 11px 'Noto Sans KR',sans-serif;color:var(--muted)}
 }
+
+/* fixes: phone weekday alignment, weekly total on top, readable digits */
+.serif,.cell .n,.wk,.agdate b,.agsum,.dd,.big,.amt,.tm,.clock .time,.weather .deg{font-variant-numeric:lining-nums}
+@media(max-width:640px){
+  .wkh{display:none}
+  .cell{border-top:0}
+  .cell .n{font-family:'Noto Sans KR',sans-serif;font-weight:500;font-size:13px}
+  .wk{margin-top:8px;border-top:1px solid #DDD2BC;border-bottom:1px solid #DDD2BC;padding:5px 8px}
+}

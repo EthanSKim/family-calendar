@@ -373,6 +373,12 @@ export default function Home() {
         : `${monthKey}-01`;
   const cells = [];
   for (let w = 0; w < weeks; w++) {
+    const strip = (
+      <div key={`w${w}`} className="wk">
+        {weekSum(w) ? moneyShort(weekSum(w)) : "—"}
+      </div>
+    );
+    if (mobile) cells.push(strip); // phones: the weekly total sits on top of its week
     for (let i = 0; i < 7; i++) {
       const d = w * 7 + i - first + 1,
         inMonth = d >= 1 && d <= days;
@@ -419,11 +425,7 @@ export default function Home() {
         </button>,
       );
     }
-    cells.push(
-      <div key={`w${w}`} className="wk">
-        {weekSum(w) ? moneyShort(weekSum(w)) : "—"}
-      </div>,
-    );
+    if (!mobile) cells.push(strip);
   }
 
   // Phone list view: only days that have something (plus today), grouped by week.
@@ -578,7 +580,7 @@ export default function Home() {
           ) : (
             <div className="cal">
               {["일", "월", "화", "수", "목", "금", "토", "주간"].map((d) => (
-                <div key={d} className="dow">
+                <div key={d} className={d === "주간" ? "dow wkh" : "dow"}>
                   {d}
                 </div>
               ))}
