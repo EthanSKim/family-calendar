@@ -1,4 +1,5 @@
 "use client";
+import { useBackClose } from "./useBackClose";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   COLOR,
@@ -40,6 +41,11 @@ export default function DayPanel({
 }) {
   const xRef = useRef<HTMLInputElement>(null);
   const tRef = useRef<HTMLInputElement>(null);
+  // 일정 and 지출 live on separate tabs; the expense shortcut opens straight on 지출
+  const [tab, setTab] = useState<"event" | "spend">(
+    focus === "expense" ? "spend" : "event",
+  );
+  useBackClose(onClose); // Android Back closes the popup instead of leaving the app
   useEffect(() => {
     if (!focus) return;
     const t = setTimeout(() => {
@@ -155,176 +161,219 @@ export default function DayPanel({
           </button>
         </div>
 
-        <section>
-          <div className="hd">
-            <h2>일정</h2>
-            <span className="lbl">{events.length}건</span>
-          </div>
-          {events.length === 0 && (
-            <div className="muted">이 날은 일정이 없어요.</div>
-          )}
-          {events.map((e) => (
-            <div className="erow" key={e.id}>
-              <div className="tm">{fmtTime(e.start_time)}</div>
-              <button
-                className="grow"
-                onClick={() => edit(e)}
-                aria-label={`${e.title} 수정`}
-              >
-                <div style={{ fontSize: 14 }}>{e.title}</div>
-                <div className="muted">
-                  {[e.location, e.description].filter(Boolean).join(" · ")}
-                </div>
-              </button>
-              <span style={{ color: COLOR[e.member] }} aria-label={e.member}>
-                ●
-              </span>
-              <button
-                className="ib"
-                aria-label={`${e.title} 삭제`}
-                onClick={() => del(e.id)}
-              >
-                🗑
-              </button>
-            </div>
-          ))}
-        </section>
-
-        <form className="card form" onSubmit={save}>
-          <div className="hd" style={{ marginBottom: 0 }}>
-            <h2>{editing ? "일정 수정" : "일정 추가"}</h2>
-            {editing && (
-              <button
-                type="button"
-                className="ib"
-                style={{ width: "auto", fontSize: 13 }}
-                onClick={reset}
-              >
-                취소
-              </button>
-            )}
-          </div>
-          <label>
-            제목
-            <input
-              ref={tRef}
-              value={f.title}
-              onChange={(e) => set("title", e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            설명
-            <input
-              value={f.description}
-              onChange={(e) => set("description", e.target.value)}
-              placeholder="메모를 남겨 보세요"
-            />
-          </label>
-          <div className="r2">
-            <label>
-              시간
-              <input
-                type="time"
-                value={f.start_time}
-                onChange={(e) => set("start_time", e.target.value)}
-              />
-            </label>
-            <label>
-              장소
-              <input
-                value={f.location}
-                onChange={(e) => set("location", e.target.value)}
-              />
-            </label>
-          </div>
-          <div className="chips" role="group" aria-label="누구의 일정인가요">
-            {MEMBERS.map((m) => (
-              <button
-                type="button"
-                key={m}
-                className={f.member === m ? `on m-${m}` : ""}
-                style={f.member === m ? { borderColor: COLOR[m] } : undefined}
-                aria-pressed={f.member === m}
-                onClick={() => set("member", m)}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-          {err && (
-            <div className="err" role="alert">
-              {err}
-            </div>
-          )}
-          <button className="btn" disabled={busy}>
-            {busy ? "저장 중…" : editing ? "수정 저장" : "일정 저장"}
+        <div className="ptabs" role="tablist" aria-label="일정 또는 지출">
+          <button
+            role="tab"
+            aria-selected={tab === "event"}
+            onClick={() => setTab("event")}
+          >
+            일정{events.length > 0 && <span> {events.length}</span>}
           </button>
-        </form>
-
-        <section>
-          <div className="hd">
-            <h2>지출</h2>
-            <span className="lbl">
-              하루 합계{" "}
-              {money(expenses.reduce((a, e) => a + e.amount_cents, 0))}
-            </span>
-          </div>
-          {expenses.length === 0 && (
-            <div className="muted">이 날은 지출이 없어요.</div>
-          )}
-          {expenses.map((e) => (
-            <div className="erow" key={e.id}>
-              <div
-                style={{
-                  flex: 1,
-                  fontSize: 14,
-                  minWidth: 0,
-                  overflowWrap: "anywhere",
-                }}
-              >
-                {e.name}
-              </div>
-              <div className="amt">{money(e.amount_cents)}</div>
-              <button
-                className="ib"
-                aria-label={`${e.name} 삭제`}
-                onClick={() => delExpense(e.id)}
-              >
-                🗑
-              </button>
-            </div>
-          ))}
-          <form className="xadd" onSubmit={addExpense}>
-            <input
-              ref={xRef}
-              value={en}
-              onChange={(e) => setEn(e.target.value)}
-              placeholder="이름"
-              aria-label="지출 이름"
-              maxLength={100}
-            />
-            <input
-              value={ea}
-              onChange={(e) => setEa(e.target.value)}
-              placeholder="$0.00"
-              aria-label="금액"
-              inputMode="decimal"
-            />
-            <button className="btn">추가</button>
-          </form>
-          {xerr && (
-            <div className="err" role="alert" style={{ marginTop: 8 }}>
-              {xerr}
-            </div>
-          )}
-        </section>
-        <div className="wkfoot">
-          <span>이 주 합계 (일–토)</span>
-          <b className="serif" style={{ fontSize: 22, color: "var(--burg)" }}>
-            {money(weekTotal)}
-          </b>
+          <button
+            role="tab"
+            aria-selected={tab === "spend"}
+            onClick={() => setTab("spend")}
+          >
+            지출
+            {expenses.length > 0 && (
+              <span>
+                {" "}
+                {money(expenses.reduce((a, e) => a + e.amount_cents, 0))}
+              </span>
+            )}
+          </button>
         </div>
+
+        {tab === "event" && (
+          <>
+            <section>
+              <div className="hd">
+                <h2>일정</h2>
+                <span className="lbl">{events.length}건</span>
+              </div>
+              {events.length === 0 && (
+                <div className="muted">이 날은 일정이 없어요.</div>
+              )}
+              {events.map((e) => (
+                <div className="erow" key={e.id}>
+                  <div className="tm">{fmtTime(e.start_time)}</div>
+                  <button
+                    className="grow"
+                    onClick={() => edit(e)}
+                    aria-label={`${e.title} 수정`}
+                  >
+                    <div style={{ fontSize: 14 }}>{e.title}</div>
+                    <div className="muted">
+                      {[e.location, e.description].filter(Boolean).join(" · ")}
+                    </div>
+                  </button>
+                  <span
+                    style={{ color: COLOR[e.member] }}
+                    aria-label={e.member}
+                  >
+                    ●
+                  </span>
+                  <button
+                    className="ib"
+                    aria-label={`${e.title} 삭제`}
+                    onClick={() => del(e.id)}
+                  >
+                    🗑
+                  </button>
+                </div>
+              ))}
+            </section>
+
+            <form className="card form" onSubmit={save}>
+              <div className="hd" style={{ marginBottom: 0 }}>
+                <h2>{editing ? "일정 수정" : "일정 추가"}</h2>
+                {editing && (
+                  <button
+                    type="button"
+                    className="ib"
+                    style={{ width: "auto", fontSize: 13 }}
+                    onClick={reset}
+                  >
+                    취소
+                  </button>
+                )}
+              </div>
+              <label>
+                제목
+                <input
+                  ref={tRef}
+                  value={f.title}
+                  onChange={(e) => set("title", e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                설명
+                <input
+                  value={f.description}
+                  onChange={(e) => set("description", e.target.value)}
+                  placeholder="메모를 남겨 보세요"
+                />
+              </label>
+              <div className="r2">
+                <label>
+                  시간
+                  <input
+                    type="time"
+                    value={f.start_time}
+                    onChange={(e) => set("start_time", e.target.value)}
+                  />
+                </label>
+                <label>
+                  장소
+                  <input
+                    value={f.location}
+                    onChange={(e) => set("location", e.target.value)}
+                  />
+                </label>
+              </div>
+              <div
+                className="chips"
+                role="group"
+                aria-label="누구의 일정인가요"
+              >
+                {MEMBERS.map((m) => (
+                  <button
+                    type="button"
+                    key={m}
+                    className={f.member === m ? `on m-${m}` : ""}
+                    style={
+                      f.member === m ? { borderColor: COLOR[m] } : undefined
+                    }
+                    aria-pressed={f.member === m}
+                    onClick={() => set("member", m)}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+              {err && (
+                <div className="err" role="alert">
+                  {err}
+                </div>
+              )}
+              <button className="btn" disabled={busy}>
+                {busy ? "저장 중…" : editing ? "수정 저장" : "일정 저장"}
+              </button>
+            </form>
+          </>
+        )}
+
+        {tab === "spend" && (
+          <>
+            <section>
+              <div className="hd">
+                <h2>지출</h2>
+                <span className="lbl">
+                  하루 합계{" "}
+                  {money(expenses.reduce((a, e) => a + e.amount_cents, 0))}
+                </span>
+              </div>
+              {expenses.length === 0 && (
+                <div className="muted">이 날은 지출이 없어요.</div>
+              )}
+              {expenses.map((e) => (
+                <div className="erow" key={e.id}>
+                  <div
+                    style={{
+                      flex: 1,
+                      fontSize: 14,
+                      minWidth: 0,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {e.name}
+                  </div>
+                  <div className="amt">{money(e.amount_cents)}</div>
+                  <button
+                    className="ib"
+                    aria-label={`${e.name} 삭제`}
+                    onClick={() => delExpense(e.id)}
+                  >
+                    🗑
+                  </button>
+                </div>
+              ))}
+              <form className="xadd" onSubmit={addExpense}>
+                <input
+                  ref={xRef}
+                  value={en}
+                  onChange={(e) => setEn(e.target.value)}
+                  placeholder="이름"
+                  aria-label="지출 이름"
+                  maxLength={100}
+                />
+                <input
+                  value={ea}
+                  onChange={(e) => setEa(e.target.value)}
+                  placeholder="$0.00"
+                  aria-label="금액"
+                  inputMode="decimal"
+                />
+                <button className="btn">추가</button>
+              </form>
+              {xerr && (
+                <div className="err" role="alert" style={{ marginTop: 8 }}>
+                  {xerr}
+                </div>
+              )}
+            </section>
+            <div className="wkfoot">
+              <span>이 주 합계 (일–토)</span>
+              <b
+                className="serif"
+                style={{ fontSize: 22, color: "var(--burg)" }}
+              >
+                {money(weekTotal)}
+              </b>
+            </div>
+          </>
+        )}
       </aside>
     </>
   );

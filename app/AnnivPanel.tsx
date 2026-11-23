@@ -1,6 +1,7 @@
 'use client';
 import { FormEvent, useEffect, useState } from 'react';
 import { Anniv } from './types';
+import { useBackClose } from './useBackClose';
 
 export default function AnnivPanel({ items, onAdd, onRemove, onClose }: {
   items: Anniv[]; onAdd: (b: object) => Promise<boolean>; onRemove: (id: string) => void; onClose: () => void;
@@ -8,6 +9,7 @@ export default function AnnivPanel({ items, onAdd, onRemove, onClose }: {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [err, setErr] = useState('');
+  useBackClose(onClose); // Android Back closes the popup
   const sorted = [...items].sort((a, b) => a.month - b.month || a.day - b.day);
 
   useEffect(() => {

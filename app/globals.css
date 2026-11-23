@@ -154,3 +154,10 @@ body{margin:0;background:var(--ivory);color:var(--ink);font-family:'Noto Sans KR
   .cell .n{font-family:'Noto Sans KR',sans-serif;font-weight:500;font-size:13px}
   .wk{margin-top:8px;border-top:1px solid #DDD2BC;border-bottom:1px solid #DDD2BC;padding:5px 8px}
 }
+
+/* popup tabs (일정 | 지출) */
+.ptabs{display:flex;gap:3px;padding:3px;border:1px solid var(--line);border-radius:24px;background:var(--card);flex:none}
+.ptabs button{flex:1;height:44px;border:0;border-radius:21px;background:none;font:500 14px 'Noto Sans KR',sans-serif;color:#4A4650;cursor:pointer}
+.ptabs button[aria-selected=true]{background:var(--navy);color:var(--card)}
+.ptabs span{font-weight:400;font-size:12px;opacity:.85}
+@media(max-width:640px){.panel{min-height:70vh}}
