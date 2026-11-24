@@ -2,6 +2,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Anniv } from './types';
 import { useBackClose } from './useBackClose';
+import { useSlideClose } from './useSlideClose';
 
 export default function AnnivPanel({ items, onAdd, onRemove, onClose }: {
   items: Anniv[]; onAdd: (b: object) => Promise<boolean>; onRemove: (id: string) => void; onClose: () => void;
@@ -9,14 +10,15 @@ export default function AnnivPanel({ items, onAdd, onRemove, onClose }: {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [err, setErr] = useState('');
-  useBackClose(onClose); // Android Back closes the popup
+  const { closing, close } = useSlideClose(onClose); // slides down, then closes
+  useBackClose(close); // Android Back closes the popup
   const sorted = [...items].sort((a, b) => a.month - b.month || a.day - b.day);
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const h = (e: KeyboardEvent) => e.key === 'Escape' && close();
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [onClose]);
+  }, [close]);
 
   async function save(e: FormEvent) {
     e.preventDefault();
@@ -28,11 +30,11 @@ export default function AnnivPanel({ items, onAdd, onRemove, onClose }: {
 
   return (
     <>
-      <div className="scrim" onClick={onClose} />
-      <aside className="panel" role="dialog" aria-label="기념일 관리">
+      <div className={`scrim${closing ? ' closing' : ''}`} onClick={close} />
+      <aside className={`panel${closing ? ' closing' : ''}`} role="dialog" aria-label="기념일 관리">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div><div className="lbl">매년 반복</div><div className="day" style={{ fontSize: 34 }}>기념일</div></div>
-          <button className="ib" aria-label="닫기" onClick={onClose}>✕</button>
+          <button className="ib" aria-label="닫기" onClick={close}>✕</button>
         </div>
         <section>
           {sorted.length === 0 && <div className="muted">아직 기념일이 없어요.</div>}

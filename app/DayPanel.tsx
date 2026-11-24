@@ -1,5 +1,6 @@
 "use client";
 import { useBackClose } from "./useBackClose";
+import { useSlideClose } from "./useSlideClose";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   COLOR,
@@ -45,7 +46,8 @@ export default function DayPanel({
   const [tab, setTab] = useState<"event" | "spend">(
     focus === "expense" ? "spend" : "event",
   );
-  useBackClose(onClose); // Android Back closes the popup instead of leaving the app
+  const { closing, close } = useSlideClose(onClose); // slides down, then closes
+  useBackClose(close); // Android Back closes the popup instead of leaving the app
   useEffect(() => {
     if (!focus) return;
     const t = setTimeout(() => {
@@ -71,10 +73,10 @@ export default function DayPanel({
   };
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const h = (e: KeyboardEvent) => e.key === "Escape" && close();
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
+  }, [close]);
 
   const edit = (e: Ev) => {
     setEditing(e.id);
@@ -137,9 +139,9 @@ export default function DayPanel({
 
   return (
     <>
-      <div className="scrim" onClick={onClose} />
+      <div className={`scrim${closing ? " closing" : ""}`} onClick={close} />
       <aside
-        className="panel"
+        className={`panel${closing ? " closing" : ""}`}
         role="dialog"
         aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일 일정`}
       >
@@ -156,7 +158,7 @@ export default function DayPanel({
               {d.getMonth() + 1}월 {d.getDate()}일
             </div>
           </div>
-          <button className="ib" aria-label="닫기" onClick={onClose}>
+          <button className="ib" aria-label="닫기" onClick={close}>
             ✕
           </button>
         </div>

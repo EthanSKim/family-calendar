@@ -4,6 +4,7 @@ import DayPanel from "./DayPanel";
 import AnnivPanel from "./AnnivPanel";
 import Checklist from "./Checklist";
 import WallMode from "./WallMode";
+import PixelWeather, { Kind, kindFor } from "./PixelWeather";
 import { Agenda, AgendaWeek } from "./MobileViews";
 import InstallApp from "./InstallApp";
 import { useList } from "./useList";
@@ -22,25 +23,13 @@ import {
   moneyTiny,
 } from "./types";
 
-const WMO = (c: number) =>
-  c === 0
-    ? "맑음"
-    : c <= 3
-      ? "대체로 맑음"
-      : c <= 48
-        ? "안개"
-        : c <= 67
-          ? "비"
-          : c <= 77
-            ? "눈"
-            : c <= 82
-              ? "소나기"
-              : "뇌우";
 const AQI = (v: number) => (v <= 50 ? "좋음" : v <= 100 ? "보통" : "나쁨");
 
 type Wx = {
   temp: number;
   text: string;
+  kind: Kind;
+  night: boolean;
   hi: number;
   lo: number;
   aqi: number | null;
@@ -55,7 +44,7 @@ function useWeather(enabled: boolean) {
       try {
         const [w, a] = await Promise.all([
           fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${q(lat)}&longitude=${q(lon)}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto&forecast_days=1`,
+            `https://api.open-meteo.com/v1/forecast?latitude=${q(lat)}&longitude=${q(lon)}&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto&forecast_days=1`,
           ).then((r) => r.json()),
           fetch(
             `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${q(lat)}&longitude=${q(lon)}&current=us_aqi`,
@@ -63,7 +52,9 @@ function useWeather(enabled: boolean) {
         ]);
         setWx({
           temp: Math.round(w.current.temperature_2m),
-          text: WMO(w.current.weather_code),
+          text: kindFor(w.current.weather_code).text,
+          kind: kindFor(w.current.weather_code).kind,
+          night: w.current.is_day === 0,
           hi: Math.round(w.daily.temperature_2m_max[0]),
           lo: Math.round(w.daily.temperature_2m_min[0]),
           aqi: a.current?.us_aqi ?? null,
@@ -471,6 +462,9 @@ export default function Home() {
           <h1>수수 부부 달력♥️</h1>
         </div>
         <div className="card weather">
+          {wx && (
+            <PixelWeather kind={wx.kind} night={wx.night} className="wxicon" />
+          )}
           <div className="serif deg">{wx ? `${wx.temp}°` : "--°"}</div>
           <small>
             {wx ? wx.text : "날씨 불러오는 중"}

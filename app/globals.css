@@ -161,3 +161,21 @@ body{margin:0;background:var(--ivory);color:var(--ink);font-family:'Noto Sans KR
 .ptabs button[aria-selected=true]{background:var(--navy);color:var(--card)}
 .ptabs span{font-weight:400;font-size:12px;opacity:.85}
 @media(max-width:640px){.panel{min-height:70vh}}
+
+/* popup animation: slides up from the bottom on phones, in from the right on larger screens */
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes slideDown{from{transform:none}to{transform:translateY(100%)}}
+@keyframes slideInRight{from{transform:translateX(100%)}to{transform:none}}
+@keyframes slideOutRight{from{transform:none}to{transform:translateX(100%)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+.panel{animation:slideInRight .26s cubic-bezier(.2,.8,.2,1) both}
+.panel.closing{animation:slideOutRight .22s ease-in both}
+.scrim{animation:fadeIn .26s ease both}
+.scrim.closing{animation:fadeOut .22s ease both}
+@media(max-width:640px){.panel{animation-name:slideUp}.panel.closing{animation-name:slideDown}}
+@media(prefers-reduced-motion:reduce){.panel,.scrim{animation:none !important}}
+
+/* pixel weather icon: 32x32 canvas scaled in whole steps so the pixels stay sharp */
+.wxicon{width:96px;height:96px;image-rendering:pixelated;border-radius:6px;flex:none;display:block}
+@media(max-width:640px){.wxicon{width:64px;height:64px}}
